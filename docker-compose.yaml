@@ -1,0 +1,102 @@
+version: '3.7'
+services:
+  openzipkin:
+    image: openzipkin/zipkin:2.23
+    mem_limit: 700m
+    env_file:
+      - ./.env
+    ports:
+      - "9411:9411"
+    restart: always
+    networks:
+      - currency-network
+    environment:
+      - RABBIT_ADDRESSES=rabbitmq
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+    restart: always
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - currency-network
+    depends_on:
+      - openzipkin
+  naming-server-eureka:
+    image: armares2001/mmv2-naming-server-eureka:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    env_file:
+      - ./.env
+    ports:
+      - "8761:8761"
+    restart: always
+    networks:
+      - currency-network
+    depends_on:
+      - rabbitmq
+  api-gateway:
+    image: armares2001/mmv2-api-gateway:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    env_file:
+      - ./.env
+    ports:
+      - "8765:8765"
+    restart: always
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server-eureka
+  currency-exchange:
+    image: armares2001/mmv2-currency-exchange-service:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    env_file:
+      - ./.env
+    ports:
+      - "8000:8000"
+    restart: always
+    networks:
+      - currency-network
+    depends_on:
+      - api-gateway
+  currency-conversion:
+    image: armares2001/mmv2-currency-conversion-service:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    env_file:
+      - ./.env
+    ports:
+      - "8100:8100"
+    restart: always
+    networks:
+      - currency-network
+    depends_on:
+      - currency-exchange
+networks:
+  currency-network:
+
+    # spring-cloud-config-server:
+    #     image: armares2001/mmv2-spring-cloud-config-server:0.0.1-SNAPSHOT
+    #     env_file:
+    #       - ./.env
+    #     ports:
+    #       - "8888:8888"
+    #     restart: always
+    #     networks:
+    #       - currency-network
+    # limits-service:
+    #     image: armares2001/mmv2-limits-services:0.0.1-SNAPSHOT
+    #     mem_limit: 700m
+    #     env_file:
+    #       - ./.env
+    #     ports:
+    #       - "8080:8080"
+    #     restart: always
+    #     networks:
+    #       - currency-network
+    #     depends_on:
+    #       - spring-cloud-config-server
+
+
+
