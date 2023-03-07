@@ -19,7 +19,10 @@ public class CurrencyExchangeService {
         if (exchange == null) {
             throw new RuntimeException("exchange not found");
         }
-        exchange.setEnvironment(env.getProperty("local.server.port"));
+        String port=env.getProperty("local.server.port");
+        String host=env.getProperty("HOSTNAME");
+        String version="v11";
+        exchange.setEnvironment(port+" "+version+" "+host);
         return exchange;
     }
 }
